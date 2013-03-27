@@ -11,7 +11,8 @@ extern "C" {
 #endif
 
 /*
- * bitmap operations for bltmap-allocation
+ * bitmap operations for bitmap-allocation
+ * bits start from 1
  *
  */
 
@@ -89,7 +90,7 @@ static inline void bitmap_clear(u32 *bitmap,unsigned long off)
     k = off / BITS_PER_U32;
     off = off % BITS_PER_U32;
     
-    clear_bit((BITS_PER_U32 - k),&bitmap[off]);
+    clear_bit((BITS_PER_U32 - k - 1),&bitmap[off]);
 }
     
 
