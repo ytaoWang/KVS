@@ -36,5 +36,6 @@ typedef unsigned long ptr_t;
 #define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
 #define BITS_TO_U32(nr) DIV_ROUND_UP(nr,BITS_PER_BYTE * sizeof(u32))
 
+#define IS_IMMEDIATE(nr)		(__builtin_constant_p(nr))
 
 #endif
