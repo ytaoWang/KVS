@@ -110,8 +110,8 @@ static inline int bitmap_empty(const u32 *bitmap,int bits)
     if(bitmap[k])
       	return 0;
   
-  if(bits % BITS_PER_U32)
-    if(bitmap[k] & BITMAP_LAST_WORD_MASK(bits))
+  if((bits % BITS_PER_U32) && \
+     (bitmap[k] & BITMAP_LAST_WORD_MASK(bits)))
       return 0;
   
   return 1;

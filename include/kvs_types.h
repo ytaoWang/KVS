@@ -24,8 +24,7 @@ typedef unsigned long ptr_t;
 #define BITMAP_LAST_WORD_MASK(nbits)                \
     (                                               \
      ((nbits % BITS_PER_U32))?                      \
-     (1UL << (nbits % BITS_PER_U32) -1 : ~0UL)      \
-                                                    )
+     (1UL << (nbits % BITS_PER_U32) -1) : ~0UL)
 
 #define BITMAP_LAST_WORD_ZERO(nbits)            \
     (                                           \
