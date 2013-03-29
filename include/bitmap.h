@@ -21,7 +21,8 @@ static int __get_remain(off_t start,size_t len)
     len = len - (BITS_PER_U32 - start);
     return len % BITS_PER_U32;
 }
-/*
+
+/**
  * bitmap allocation notice u32 allocation position is reverse with our mind.
  * fox example:0,return 32 rather than 1,0 flags a status/fail
  */
@@ -37,9 +38,10 @@ static u32 __bitmap_alloc(u32 *bitmap,off_t start,size_t len)
 #ifdef DEBUG
     printf("begin index:%d,offset:%d,start:%ld,len:%u\n",k,s1,start,len);
 #endif
-    
+    /*    
     b = bitmap[k] | (~0UL << (BITS_PER_U32 - s1));
-    if((pos = find_first_zero_bit(&b,lim)) != lim)
+    
+    if((pos = find_first_zero_bit(b,lim)) != lim)
     {
 #ifdef DEBUG
         printf("find in first u32,pos:%d\n",pos);
@@ -54,7 +56,7 @@ static u32 __bitmap_alloc(u32 *bitmap,off_t start,size_t len)
 #endif
     for(k=k+1;k<lim;k++)
     {
-        if((pos = find_first_zero_bit(&bitmap[k],BITS_PER_U32)) != BITS_PER_U32)
+        if((pos = find_first_zero_bit(bitmap[k],BITS_PER_U32)) != BITS_PER_U32)
         {
 #ifdef DEBUG
             printf("find in internal u32,pos:%d\n",pos);
@@ -70,14 +72,14 @@ static u32 __bitmap_alloc(u32 *bitmap,off_t start,size_t len)
 #endif
     
     b = bitmap[k] | (~0UL << (BITS_PER_U32 - s2));
-    if((pos = find_first_zero_bit(&b,s2+1)) != (s2+1))
+    if((pos = find_first_zero_bit(b,s2+1)) != (s2+1))
     {
         #ifdef DEBUG
         printf("find in last u32,pos:%d\n",pos);
         #endif
         return (k+1) * BITS_PER_U32 - pos - 1;
     }
-    
+*/    
     return 0;
 }
     

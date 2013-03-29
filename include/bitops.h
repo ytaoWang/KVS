@@ -2,7 +2,9 @@
 #define __BITOPS_H_
 
 #include "kvs_types.h"
-
+#ifdef DEBUG
+#include <stdio.h>
+#endif
 #include <sys/types.h>
 
 /*
@@ -147,15 +149,23 @@ static inline int test_and_change_bit(size_t nr,volatile u32 *addr)
     return oldbit;
 }
 
-
-static inline int find_first_zero_bit(const u32 *addr,size_t size)
+/**
+ * return undefined if not zero has found,check ~0UL before call the 
+ * following function
+ */
+static inline int find_first_zero_bit(u32 addr)
 {
-    return 0;
+    asm volatile(LOCK_PREFIX "rep; bsf %1,%0"
+                 :"=r"(addr):"r"(~addr));
+    
+    return addr;
 }
 
-static inline int find_last_zero_bit(const u32 *addr, size_t size)
+static inline int find_last_zero_bit(u32 addr)
 {
-    return 0;
+    asm volatile(LOCK_PREFIX "rep; bsr %1,%0"
+                 :"=r"(addr):"r"(~addr));
+    return addr;
 }
 
 #endif
