@@ -10,12 +10,12 @@
 extern "C" {
 #endif
 
-/*
+/**
  * bitmap operations for bitmap-allocation
  * bits start from 1,0 is just a flag for return status
  *
  */
-
+    
 static int __get_remain(off_t start,size_t len)
 {
     len = len - (BITS_PER_U32 - start);
@@ -26,60 +26,67 @@ static int __get_remain(off_t start,size_t len)
  * bitmap allocation notice u32 allocation position is reverse with our mind.
  * fox example:0,return 32 rather than 1,0 flags a status/fail
  */
-static u32 __bitmap_alloc(u32 *bitmap,off_t start,size_t len)
+static u32 __bitmap_alloc(u32 *bitmap,off_t hint,size_t len)
 {
-    int k,lim,s1,s2,pos;
-    u32 b,e;
+    u32 start,nbits;
     
-    k = start / BITS_PER_U32;
-    s1 = start % BITS_PER_U32;
-    lim = (len >= BITS_PER_U32 ? BITS_PER_U32:len);
-    
-#ifdef DEBUG
-    printf("begin index:%d,offset:%d,start:%ld,len:%u\n",k,s1,start,len);
-#endif
-    /*    
-    b = bitmap[k] | (~0UL << (BITS_PER_U32 - s1));
-    
-    if((pos = find_first_zero_bit(b,lim)) != lim)
-    {
-#ifdef DEBUG
-        printf("find in first u32,pos:%d\n",pos);
-#endif
-        return BITS_PER_U32 - (pos + 1) + k * BITS_PER_U32;
-    }
-    
-    lim = (start + len)/BITS_PER_U32;
-    
-#ifdef DEBUG
-    printf("k:%d,lim:%d\n",k,lim);
-#endif
-    for(k=k+1;k<lim;k++)
-    {
-        if((pos = find_first_zero_bit(bitmap[k],BITS_PER_U32)) != BITS_PER_U32)
-        {
-#ifdef DEBUG
-            printf("find in internal u32,pos:%d\n",pos);
-#endif
-            return k * BITS_PER_U32 + BITS_PER_U32 - pos - 1;
-        }
-    }
+    start = hint / BITS_PER_U32;
 
-    s2 = __get_remain(start,len);
-    //get the last u32's starting bit
 #ifdef DEBUG
-    printf("find in the last u32:%d\n",s2);
-#endif
-    
-    b = bitmap[k] | (~0UL << (BITS_PER_U32 - s2));
-    if((pos = find_first_zero_bit(b,s2+1)) != (s2+1))
-    {
-        #ifdef DEBUG
-        printf("find in last u32,pos:%d\n",pos);
-        #endif
-        return (k+1) * BITS_PER_U32 - pos - 1;
+    printf("start:%u,hint:%lu\n",start,hint);
+#endif    
+    //scan first u32 in near hint
+    if(bitmap[start] != ~0UL) {
+        int left,right,mid;
+
+        mid = hint % BITS_PER_U32;
+        left = mid + 1;
+        right = mid -1;
+        
+        while(left < BITS_PER_U32 || right > 0) {
+          
+#ifdef DEBUG
+            printf("start:%u,hint:%lu,left:%d(%0lx),right:%d\n",start,hint,left,1UL << left,right);
+#endif    
+            
+            if((right > 0) && !(bitmap[start] & (1UL << right)))
+                return start * BITS_PER_U32 + right;
+            if((left < BITS_PER_U32) && !(bitmap[start] & (1UL << left))) {
+                #ifdef DEBUG
+                printf("left:%d,right:%d,res:%lx,bitmap[%d]:%0x\n",left,right,bitmap[start] & (1UL << left),start,bitmap[start]);
+                #endif
+                return start * BITS_PER_U32 + left;
+            }
+            
+            left ++;
+            right --;
+        }
+        
+        return 1 + start * BITS_PER_U32 + find_last_zero_bit(bitmap[start]);
     }
-*/    
+    
+#ifdef DEBUG
+    printf("start:%u,nbits:%u,hint:%lu,len:%zu\n",start,nbits,hint,len);
+#endif
+
+    // then scan after hint u32
+    for(nbits = (start + 1) * BITS_PER_U32,start++;nbits < hint + len; nbits += BITS_PER_U32,start++) {
+#ifdef DEBUG
+        printf("start:%u,nbits:%u,bitmap[%u]:%0x\n",start,nbits,start,bitmap[start]);
+#endif
+        if(bitmap[start] != ~0UL)
+            return 1 + nbits + find_last_zero_bit(bitmap[start]);
+    }
+    
+    //scan u32 reverse(index offset + bit offset within u32)
+    for(nbits = (start - 1) * BITS_PER_U32,start--;nbits >= 0;nbits -= BITS_PER_U32,start--) {
+        if(bitmap[start] != ~0UL)
+            return 1 + nbits + find_first_zero_bit(bitmap[start]);
+    }
+    
+#ifdef DEBUG
+    printf("cann't find available bit\n");
+#endif
     return 0;
 }
     
@@ -143,12 +150,13 @@ static inline void bitmap_set(u32 *bitmap,unsigned long off)
     int k;
     
     k = off / BITS_PER_U32;
-    off = off % BITS_PER_U32;
+    off = off % BITS_PER_U32 - 1;
     
-    set_bit((BITS_PER_U32 - off -1 ),&bitmap[k]);
-    #ifdef DEBUG
+    set_bit(off,&bitmap[k]);
+
+#ifdef DEBUG
     printf("bitmap[%d]:%u,off:%ld\n",k,bitmap[k],off);
-    #endif
+#endif
 }
 
 static inline void bitmap_clear(u32 *bitmap,unsigned long off)    
@@ -156,9 +164,9 @@ static inline void bitmap_clear(u32 *bitmap,unsigned long off)
     int k;
     
     k = off / BITS_PER_U32;
-    off = off % BITS_PER_U32;
+    off = off % BITS_PER_U32 - 1;
     
-    clear_bit((BITS_PER_U32 - k - 1),&bitmap[off]);
+    clear_bit(off,&bitmap[k]);
 }
     
 

@@ -12,6 +12,7 @@
  * reference by /arch/x86/include/asm/alternative.h linux kernel
  * /arch/x86/include/asm/bitops.h
  * see also http://lxr.linux.no
+ * All scan also come from bit 0
  */
 
 #if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 1)
