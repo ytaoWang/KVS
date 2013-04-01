@@ -33,10 +33,10 @@ static u32 __bitmap_alloc(u32 *bitmap,off_t hint,size_t len)
     start = hint / BITS_PER_U32;
 
 #ifdef DEBUG
-    printf("start:%u,hint:%lu\n",start,hint);
+    printf("start:%u,hint:%lu,value:%x,%d,%lx\n",start,hint,bitmap[start],bitmap[start] != U32_MAX,U32_MAX);
 #endif    
     //scan first u32 in near hint
-    if(bitmap[start] != ~0UL) {
+    if(bitmap[start] != U32_MAX) {
         int left,right,mid;
 
         mid = hint % BITS_PER_U32;
@@ -74,13 +74,13 @@ static u32 __bitmap_alloc(u32 *bitmap,off_t hint,size_t len)
 #ifdef DEBUG
         printf("start:%u,nbits:%u,bitmap[%u]:%0x\n",start,nbits,start,bitmap[start]);
 #endif
-        if(bitmap[start] != ~0UL)
+        if(bitmap[start] != U32_MAX)
             return 1 + nbits + find_last_zero_bit(bitmap[start]);
     }
     
     //scan u32 reverse(index offset + bit offset within u32)
     for(nbits = (start - 1) * BITS_PER_U32,start--;nbits >= 0;nbits -= BITS_PER_U32,start--) {
-        if(bitmap[start] != ~0UL)
+        if(bitmap[start] != U32_MAX)
             return 1 + nbits + find_first_zero_bit(bitmap[start]);
     }
     
@@ -97,7 +97,7 @@ static inline int bitmap_clean(u32 *bitmap,unsigned long bits)
     int k,lim = bits/BITS_PER_U32;
     
     for(k = 0;k < lim;k++)
-        bitmap[k] &= 0UL;
+        bitmap[k] &= U32_MAX;
 
     bitmap[k] &= BITMAP_LAST_WORD_ZERO(bits);
     
@@ -147,8 +147,9 @@ static inline void bitmap_set(u32 *bitmap,unsigned long off)
 {
     int k;
     
+    off --;
     k = off / BITS_PER_U32;
-    off = off % BITS_PER_U32 - 1;
+    off = off % BITS_PER_U32;
     
     set_bit(off,&bitmap[k]);
 
@@ -162,8 +163,9 @@ static inline void bitmap_clear(u32 *bitmap,unsigned long off)
 {
     int k;
     
+    off --;
     k = off / BITS_PER_U32;
-    off = off % BITS_PER_U32 - 1;
+    off = off % BITS_PER_U32;
     
     clear_bit(off,&bitmap[k]);
 }
