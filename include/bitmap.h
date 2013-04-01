@@ -99,31 +99,29 @@ static inline int bitmap_clean(u32 *bitmap,unsigned long bits)
     for(k = 0;k < lim;k++)
         bitmap[k] &= 0UL;
 
-    #ifdef DEBUG
-    #endif 
-
     bitmap[k] &= BITMAP_LAST_WORD_ZERO(bits);
     
 
-    #ifdef DEBUG
+#ifdef DEBUG
     printf("bitmap[0]:%x\n",bitmap[0]);
-    #endif
+#endif
+    return 0;
 }   
 
 
 static inline int bitmap_empty(const u32 *bitmap,int bits) 
 {
-  int k,lim = bits / BITS_PER_U32;
+    int k,lim = bits / BITS_PER_U32;
+    
+    for(k = 0;k < lim;k++) 
+        if(bitmap[k])
+            return 0;
+    
+    if((bits % BITS_PER_U32) &&                 \
+       (bitmap[k] & BITMAP_LAST_WORD_MASK(bits)))
+        return 0;
   
-  for(k = 0;k < lim;k++) 
-    if(bitmap[k])
-      	return 0;
-  
-  if((bits % BITS_PER_U32) && \
-     (bitmap[k] & BITMAP_LAST_WORD_MASK(bits)))
-      return 0;
-  
-  return 1;
+    return 1;
 }
 
     
@@ -157,6 +155,7 @@ static inline void bitmap_set(u32 *bitmap,unsigned long off)
 #ifdef DEBUG
     printf("bitmap[%d]:%u,off:%ld\n",k,bitmap[k],off);
 #endif
+
 }
 
 static inline void bitmap_clear(u32 *bitmap,unsigned long off)    
