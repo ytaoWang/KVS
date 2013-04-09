@@ -20,7 +20,7 @@ typedef int (*kvs_cmp_t)(const struct kvs_key *,const struct kvs_key *);
 
 /*
  * record disk layout:
- * page header | K/V  ... K/V |
+ * page header | header K/V  ... header K/V |
  *
  **/
 
